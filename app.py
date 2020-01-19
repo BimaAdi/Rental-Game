@@ -67,11 +67,17 @@ class GameForm(FlaskForm):
 class RentalForm(FlaskForm):
     user_id = IntegerField('user_id', render_kw={'readonly':True})
     game_id = IntegerField('game_id', render_kw={'readonly':True})
-    nama_user = StringField('nama_user', render_kw={'readonly':True})
-    nama_game = StringField('nama_game', render_kw={'readonly':True})
+    nama_user = StringField('peminjam', render_kw={'readonly':True})# <--
+    nama_game = StringField('nama game', render_kw={'readonly':True})
     # format='%d/%m/%Y'
-    tanggal_pinjam = DateField('tanggal_pinjam', validators=[DataRequired()])
-    tanggal_kembali = DateField('tanggal_kembali', validators=[DataRequired()])
+    tanggal_pinjam = DateField('tanggal pinjam', validators=[DataRequired()])
+    tanggal_kembali = DateField('tanggal kembali', validators=[DataRequired()])
+
+class PengembalianForm(FlaskForm):
+    nama_game = StringField('nama game', render_kw={'readonly':True})
+    nama_peminjam = StringField('nama peminjam', render_kw={'readonly':True})
+    tanggal_pinjam = DateField('tanggal pinjam')
+    tanggal_kembali = DateField('tanggal kembali')
 
 ## Init admin
 def init():
@@ -193,4 +199,36 @@ def game_rental(game_id):
         return redirect(url_for('game_index'))
     nama_game = Game.query.filter_by(id=game_id).first().nama
     form = RentalForm(user_id=current_user.id, game_id=game_id, nama_user=current_user.username, nama_game=nama_game)
-    return render_template('game/rental.html', form=form)
+    return render_template('game/rental.html', form=form, current_user=current_user)
+
+@app.route('/game/pengembalian/<int:game_id>', methods=['GET', 'POST'])
+@login_required
+def game_pengembalian(game_id):
+    if current_user.is_admin:
+        form = PengembalianForm()
+        if form.validate_on_submit():
+            updated_game = Game.query.filter_by(id=game_id).first()
+            updated_game.tanggal_pinjam = form.tanggal_pinjam.data
+            updated_game.tanggal_kembali = form.tanggal_kembali.data
+            db.session.commit()
+            flash('Tanggal berhasil diganti!')
+        game =  Game.query.filter_by(id=game_id).first()
+        peminjam = User.query.filter_by(id=game.user_id).first()
+        form = PengembalianForm(nama_game=game.nama, nama_peminjam=peminjam.username, 
+                            tanggal_pinjam=game.tanggal_pinjam, tanggal_kembali=game.tanggal_kembali)
+        return render_template('game/pengembalian.html', form=form, game=game)
+
+    return redirect(url_for('game_index'))
+
+@app.route('/game/pengembalian/selesai/<int:game_id>', methods=['GET'])
+@login_required
+def game_pengembalian_selesai(game_id):
+    if current_user.is_admin:
+        game_selesai = Game.query.filter_by(id=game_id).first()
+        game_selesai.is_rental = False
+        game_selesai.user_id = None
+        game_selesai.tanggal_pinjam = None
+        game_selesai.tanggal_kembali = None
+        db.session.commit()
+        return redirect(url_for('game_detail', game_id=game_selesai.id))
+    return redirect(url_for('game_index'))

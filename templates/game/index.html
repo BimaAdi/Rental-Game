@@ -1,7 +1,7 @@
 {% extends "bootstrap/base.html" %}
 
 {% block title %}
-Dashboard
+Rental Game
 {% endblock %}
 
 {% block styles %}
@@ -24,6 +24,12 @@ Dashboard
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
             {% if current_user.is_authenticated %}
+            <span class="navbar-text">
+              Hello, {{ current_user.username }}
+            </span>
+            {% if current_user.is_authenticated and current_user.is_admin == False %}
+              <li><a href="/user">Game yang anda rental</a></li>
+            {% endif %}
             <li><a href="{{ url_for('logout') }}">Log Out</a></li>
             {% else %}
             <li><a href="{{ url_for('login') }}">Login</a></li>
@@ -36,14 +42,14 @@ Dashboard
 
     <div class="container">
           {% if current_user.is_authenticated %}
-          <h1 class="page-header">Welcome to Game Rental {{ current_user.username }}</h1>
+          <h1 class="page-header">Welcome to Rental Game {{ current_user.username }}</h1>
           {% else %}
-          <h1 class="page-header">Welcome to Game Rental</h1> 
+          <h1 class="page-header">Welcome to Rental Game</h1> 
           {% endif %}
 
           <h2 class="sub-header">List game</h2>
           {% if current_user.is_admin %}
-          <a href="{{ url_for('game_create') }}">Tambah Game</a>
+          <a href="{{ url_for('game_create') }}" class="btn btn-primary">Tambah Game</a>
           {% endif %}
           <div class="table-responsive">
             <table class="table table-striped">

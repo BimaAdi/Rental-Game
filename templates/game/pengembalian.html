@@ -8,6 +8,7 @@ Rental Game
 {% block styles %}
 {{super()}}
 <link rel="stylesheet" href="{{url_for('.static', filename='dashboard.css')}}">
+<link rel="stylesheet" href="{{url_for('.static', filename='style.css')}}">
 {% endblock %}
 
 {% block content %}
@@ -24,12 +25,7 @@ Rental Game
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
-            {% if current_user.is_authenticated %}
             <li><a href="{{ url_for('logout') }}">Log Out</a></li>
-            {% else %}
-            <li><a href="{{ url_for('login') }}">Login</a></li>
-            <li><a href="{{ url_for('signup') }}">Sign Up</a></li>
-            {% endif %}
           </ul>
         </div>
       </div>
@@ -37,13 +33,27 @@ Rental Game
 
 
     <div class="container">
-        <form class="form-signin" method="POST" action="/game/update/{{ form.id.data }}">
-            <h2 class="form-signin-heading">Edit Game</h2>
+      <h2>Form Rental</h2>
+
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-success" role="alert">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+        <form method="POST" action="/game/pengembalian/{{ game.id }}">
             {{ form.hidden_tag() }}
-            {{ wtf.form_field(form.nama) }}
-            {{ wtf.form_field(form.deskripsi) }}
-            <button class="btn btn-lg btn-primary btn-block" type="submit">Edit Game</button>
+            {{ wtf.form_field(form.nama_peminjam) }}
+            {{ wtf.form_field(form.nama_game) }}
+            {{ wtf.form_field(form.tanggal_pinjam) }}
+            {{ wtf.form_field(form.tanggal_kembali) }}
+            <a href="/game/pengembalian/selesai/{{ game.id }}" class="btn btn-primary">Rental Selesai</a>
+            <button type="submit" class="btn btn-danger">Ganti Tanggal Pinjam</button>
+            <a href="/game/{{ game.id }}" class="btn btn-secondary">Kembali</a>
         </form>
     </div>
-
 {% endblock %}
