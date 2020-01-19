@@ -1,9 +1,11 @@
+from datetime import datetime
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, IntegerField
 from wtforms.widgets import TextArea
-from wtforms.validators import InputRequired, Length
+from wtforms.fields.html5 import DateField
+from wtforms.validators import InputRequired, Length, DataRequired
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -27,13 +29,17 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(15), unique=True)
     password = db.Column(db.String(80))
-    is_admin = db.Column(db.Boolean)
+    is_admin = db.Column(db.Boolean, default=False)
+    games = db.relationship('Game', backref='user', lazy=True)
 
 class Game(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nama = db.Column(db.String(50), unique=True)
     deskripsi = db.Column(db.String(100))
-    is_rental = db.Column(db.Boolean)
+    tanggal_pinjam = db.Column(db.Date())
+    tanggal_kembali = db.Column(db.Date())
+    is_rental = db.Column(db.Boolean, default=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -54,7 +60,18 @@ class GameForm(FlaskForm):
     nama = StringField('nama', validators=[InputRequired(), Length(min=1, max=50)])
     deskripsi = StringField('deskripsi', validators=[InputRequired(), Length(min=8, max=100)], widget=TextArea())
     is_rental = BooleanField('is_rental')
+    peminjam = StringField('nama_peminjam')
+    tanggal_pinjam = DateField('tanggal_pinjam')
+    tanggal_kembali = DateField('tanggal_kembali')
 
+class RentalForm(FlaskForm):
+    user_id = IntegerField('user_id', render_kw={'readonly':True})
+    game_id = IntegerField('game_id', render_kw={'readonly':True})
+    nama_user = StringField('nama_user', render_kw={'readonly':True})
+    nama_game = StringField('nama_game', render_kw={'readonly':True})
+    # format='%d/%m/%Y'
+    tanggal_pinjam = DateField('tanggal_pinjam', validators=[DataRequired()])
+    tanggal_kembali = DateField('tanggal_kembali', validators=[DataRequired()])
 
 ## Init admin
 def init():
@@ -144,12 +161,11 @@ def game_update(game_id):
             updated_game = Game.query.filter_by(id=game_id).first()
             updated_game.nama = form.nama.data
             updated_game.deskripsi = form.deskripsi.data
-            updated_game.is_rental = form.is_rental.data
             db.session.commit()
             return redirect(url_for('game_index'))
         else:
             game = Game.query.filter_by(id=game_id).first()
-            form = GameForm(id=game.id, nama=game.nama, deskripsi=game.deskripsi, is_rental=game.is_rental)
+            form = GameForm(id=game.id, nama=game.nama, deskripsi=game.deskripsi)
             return render_template('game/update.html', form=form, current_user=current_user)
     else:
         return redirect(url_for('game_index'))
@@ -163,8 +179,18 @@ def game_delete(game_id):
         db.session.commit()
     return redirect(url_for('game_index'))
 
-@app.route('/game/rental/<int:game_id>', methods=['GET'])
+@app.route('/game/rental/<int:game_id>', methods=['GET', 'POST'])
 @login_required
 def game_rental(game_id):
-    return render_template('game/rental.html', current_user=current_user)
-
+    form = RentalForm()
+    if form.validate_on_submit():
+        updated_game = Game.query.filter_by(id=game_id).first()
+        updated_game.is_rental = True
+        updated_game.tanggal_pinjam = form.tanggal_pinjam.data
+        updated_game.tanggal_kembali = form.tanggal_kembali.data
+        updated_game.user_id = form.user_id.data
+        db.session.commit()
+        return redirect(url_for('game_index'))
+    nama_game = Game.query.filter_by(id=game_id).first().nama
+    form = RentalForm(user_id=current_user.id, game_id=game_id, nama_user=current_user.username, nama_game=nama_game)
+    return render_template('game/rental.html', form=form)
