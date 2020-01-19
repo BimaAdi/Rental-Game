@@ -60,13 +60,16 @@ Dashboard
                     <td>{{ item.nama }}</td>
                     {% if item.is_rental %}
                       <td>dirental</td>
-                      <td><a href="/game/{{ item.id }}">detail</a><br/></td>
+                      <td><a href="/game/{{ item.id }}" class="btn btn-success">detail</a><br/></td>
                       {% else %}
                       <td>tidak dirental</td>
                       {% if current_user.is_admin %}
-                      <td><a href="/game/{{ item.id }}">detail</a>
+                      <td><a href="/game/{{ item.id }}" class="btn btn-success">detail</a>
                       {% else %}
-                      <td><a href="/game/{{ item.id }}">detail</a><br/><a href="game/rental/{{ item.id }}">rental sekarang</a></td>
+                      <td>
+                        <a href="/game/{{ item.id }}" class="btn btn-success">detail</a>
+                        <a href="game/rental/{{ item.id }}" class="btn btn-warning">rental sekarang</a>
+                      </td>
                       {% endif %}
                     {% endif %}
                   </tr>

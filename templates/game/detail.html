@@ -38,17 +38,26 @@ Dashboard
 
         <div class="card" style="border-color: black; margin-top: 1rem;">
             <div class="card-body">
-              <h1 class="card-title">{{ detail_game.nama }}</h1>
+              <h2>Nama game</h2>
+              <p class="card-title">{{ detail_game.nama }}</p>
+              <h2>Deskripsi</h2>
               <p class="card-text">{{ detail_game.deskripsi }}</p>
               {% if current_user.is_admin %}
-              <a href="/game/update/{{ detail_game.id }}">Edit</a>
-              <form method="POST" action="/game/delete/{{ detail_game.id }}">
-                <button type="submit">Hapus</button>
+              <a href="/game/pengembalian/{{ detail_game.id }}" class="btn btn-success">Status Pengembalian</a>
+              <a href="/game/update/{{ detail_game.id }}" class="btn btn-primary">Edit Game</a>
+              <form method="POST" action="/game/delete/{{ detail_game.id }}" style="display: inline-block;">
+                <button type="submit" class="btn btn-danger">Hapus Game</button>
               </form>
+              <a href="/game" style="display: block;">Kembali ke halaman utama</a>
               {% else %}
-              <form method="POST" action="/game/{{ detail_game.id }}">
-                <button type="submit">Rental Sekarang</button>
-              </form>
+                {% if detail_game.is_rental %}
+
+                {% else %}
+                <form method="GET" action="/game/rental/{{ detail_game.id }}">
+                  <button type="submit" class="btn btn-warning">Rental Sekarang</button>
+                </form>
+                {% endif %}
+              <a href="/game">Kembali ke halaman utama</a>
               {% endif %}
             </div>
           </div>
