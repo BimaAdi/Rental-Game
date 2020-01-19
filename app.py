@@ -12,7 +12,8 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://bima:password@localhost/rental' # pip install pymysql
 Bootstrap(app)
 db = SQLAlchemy(app)
 login_manager = LoginManager()
